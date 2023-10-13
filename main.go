@@ -34,6 +34,7 @@ func main() {
 	r.Get("/healthz", handlerReadiness)
 	r.Get("/metrics", apiCfg.handlerMetrics)
 	r.Get("/reset", apiCfg.handlerReset)
+	r.Post("/api/validate_chirp", apiCfg.handlerValidateChirp)
 
 	corsMux := middlewareCors(r)
 
