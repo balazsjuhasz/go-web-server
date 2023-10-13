@@ -31,10 +31,17 @@ func main() {
 	fsHandler := apiCfg.middlewareMetricsInc(http.StripPrefix("/app", http.FileServer(http.Dir(filepathRoot))))
 	r.Handle("/app", fsHandler)
 	r.Handle("/app/*", fsHandler)
-	r.Get("/healthz", handlerReadiness)
-	r.Get("/metrics", apiCfg.handlerMetrics)
-	r.Get("/reset", apiCfg.handlerReset)
-	r.Post("/api/validate_chirp", apiCfg.handlerValidateChirp)
+
+	apiRouter := chi.NewRouter()
+	apiRouter.Get("/healthz", handlerReadiness)
+	apiRouter.Get("/metrics", apiCfg.handlerMetrics)
+	apiRouter.Get("/reset", apiCfg.handlerReset)
+	apiRouter.Post("/api/validate_chirp", apiCfg.handlerValidateChirp)
+	r.Mount("/api", apiRouter)
+
+	adminRouter := chi.NewRouter()
+	adminRouter.Get("/metrics", apiCfg.handlerAdminMetrics)
+	r.Mount("/admin", adminRouter)
 
 	corsMux := middlewareCors(r)
 
