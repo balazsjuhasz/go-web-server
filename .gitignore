@@ -1,2 +1,3 @@
 .env
 webserver*
+database.json

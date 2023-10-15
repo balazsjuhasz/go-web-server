@@ -5,12 +5,14 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/balazsjuhasz/go-web-server/internal/database"
 	"github.com/go-chi/chi/v5"
 	"github.com/joho/godotenv"
 )
 
 type apiConfig struct {
 	fileserverHits int
+	DB             *database.DB
 }
 
 func main() {
@@ -23,8 +25,14 @@ func main() {
 
 	filepathRoot := "."
 
+	db, err := database.NewDB("database.json")
+	if err != nil {
+		log.Fatal("Can't connect to database", err)
+	}
+
 	apiCfg := apiConfig{
 		fileserverHits: 0,
+		DB:             db,
 	}
 
 	r := chi.NewRouter()
@@ -36,7 +44,8 @@ func main() {
 	apiRouter.Get("/healthz", handlerReadiness)
 	apiRouter.Get("/metrics", apiCfg.handlerMetrics)
 	apiRouter.Get("/reset", apiCfg.handlerReset)
-	apiRouter.Post("/api/validate_chirp", apiCfg.handlerValidateChirp)
+	apiRouter.Post("/chirps", apiCfg.handlerCreateChirp)
+	apiRouter.Get("/chirps", apiCfg.handlerGetChirps)
 	r.Mount("/api", apiRouter)
 
 	adminRouter := chi.NewRouter()
