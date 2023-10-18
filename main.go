@@ -13,6 +13,7 @@ import (
 type apiConfig struct {
 	fileserverHits int
 	DB             *database.DB
+	jwtSecret      string
 }
 
 func main() {
@@ -21,6 +22,11 @@ func main() {
 	portString := os.Getenv("PORT")
 	if portString == "" {
 		log.Fatal("PORT is not found in the environment")
+	}
+
+	jwtSecret := os.Getenv("JWT_SECRET")
+	if jwtSecret == "" {
+		log.Fatal("JWT_SECRET is not found in the environment")
 	}
 
 	filepathRoot := "."
@@ -33,6 +39,7 @@ func main() {
 	apiCfg := apiConfig{
 		fileserverHits: 0,
 		DB:             db,
+		jwtSecret:      jwtSecret,
 	}
 
 	r := chi.NewRouter()
@@ -50,6 +57,8 @@ func main() {
 	apiRouter.Get("/chirps/{chirpID}", apiCfg.handlerGetChirpByID)
 
 	apiRouter.Post("/users", apiCfg.handlerCreateUser)
+
+	apiRouter.Post("/login", apiCfg.handlegLogin)
 
 	r.Mount("/api", apiRouter)
 

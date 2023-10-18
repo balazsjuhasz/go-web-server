@@ -7,7 +7,8 @@ import (
 
 func (apiCfg *apiConfig) handlerCreateUser(w http.ResponseWriter, r *http.Request) {
 	type parameters struct {
-		Email string `json:"email"`
+		Email    string `json:"email"`
+		Password string `json:"password"`
 	}
 	decoder := json.NewDecoder(r.Body)
 
@@ -19,7 +20,7 @@ func (apiCfg *apiConfig) handlerCreateUser(w http.ResponseWriter, r *http.Reques
 	}
 
 	// Save it to the store
-	user, err := apiCfg.DB.CreateUser(params.Email)
+	user, err := apiCfg.DB.CreateUser(params.Email, params.Password)
 	if err != nil {
 		respondWithError(w, 500, "Can't create user")
 		return
