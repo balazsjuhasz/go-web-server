@@ -40,7 +40,7 @@ func (apiCfg *apiConfig) handlerCreateChirp(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	respondWithJSON(w, 200, databaseChirpToChirp(chirp))
+	respondWithJSON(w, 201, databaseChirpToChirp(chirp))
 }
 
 func (apiCfg *apiConfig) handlerGetChirps(w http.ResponseWriter, r *http.Request) {
