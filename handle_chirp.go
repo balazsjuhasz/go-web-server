@@ -2,8 +2,12 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
+	"strconv"
+
+	"github.com/go-chi/chi/v5"
 )
 
 func (apiCfg *apiConfig) handlerCreateChirp(w http.ResponseWriter, r *http.Request) {
@@ -46,4 +50,27 @@ func (apiCfg *apiConfig) handlerGetChirps(w http.ResponseWriter, r *http.Request
 	}
 
 	respondWithJSON(w, 200, databaseChirpsToChirps(dbChirps))
+}
+
+func (apiCfg *apiConfig) handlerGetChirpByID(w http.ResponseWriter, r *http.Request) {
+	chirpIDStr := chi.URLParam(r, "chirpID")
+	dbChirps, err := apiCfg.DB.GetChirps()
+	if err != nil {
+		respondWithError(w, 500, "Couldn't retrive chirps")
+	}
+
+	chirpID, err := strconv.Atoi(chirpIDStr)
+	if err != nil {
+		respondWithError(w, 400, fmt.Sprintf("Invalid ID: %v received", chirpIDStr))
+		return
+	}
+
+	for _, chirp := range dbChirps {
+		if chirp.ID == chirpID {
+			respondWithJSON(w, 200, databaseChirpToChirp(chirp))
+			return
+		}
+	}
+
+	respondWithError(w, 404, fmt.Sprintf("Chirp with ID: %d not found", chirpID))
 }

@@ -21,3 +21,15 @@ func databaseChirpsToChirps(dbChirps []database.Chirp) []Chirp {
 	}
 	return chirps
 }
+
+type User struct {
+	ID    int    `json:"id"`
+	Email string `json:"email"`
+}
+
+func databaseUserToUser(dbUser database.User) User {
+	return User{
+		ID:    dbUser.ID,
+		Email: dbUser.Email,
+	}
+}
