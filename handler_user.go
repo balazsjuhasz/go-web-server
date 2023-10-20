@@ -49,7 +49,7 @@ func (apiCfg *apiConfig) handlerUpdateUser(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	userIdString, err := auth.ValidateJwtToken(token, apiCfg.jwtSecret)
+	userIdString, err := auth.ValidateJwtToken(token, apiCfg.jwtSecret, "chirpy-access")
 	if err != nil {
 		respondWithError(w, http.StatusUnauthorized, "Couldn't validate JWT")
 		return

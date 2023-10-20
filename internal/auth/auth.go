@@ -22,15 +22,21 @@ func CheckPasswordHash(password string, hashedPassword string) error {
 	return bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
 }
 
-func CreateJwtToken(durationInSeconds int, userID string, tokenSecret string) (string, error) {
-	deltaTime := time.Duration(durationInSeconds) * time.Second
-	if deltaTime == 0 || deltaTime > 24*time.Hour {
-		deltaTime = 24 * time.Hour
+func CreateJwtToken(tokenType string, userID string, tokenSecret string) (string, error) {
+	issuer := "chirpy"
+	deltaTime := time.Hour
+	switch typ := tokenType; typ {
+	case "access":
+		issuer += "-access"
+	case "refresh":
+		issuer += "-refresh"
+		deltaTime = time.Hour * 24 * 60
+	default:
+		return "", errors.New("invalid token type")
 	}
 
-	// Create the Claims
 	claims := &jwt.RegisteredClaims{
-		Issuer:    "chirpy",
+		Issuer:    issuer,
 		IssuedAt:  jwt.NewNumericDate(time.Now().UTC()),
 		ExpiresAt: jwt.NewNumericDate(time.Now().UTC().Add(deltaTime)),
 		Subject:   userID,
@@ -41,7 +47,7 @@ func CreateJwtToken(durationInSeconds int, userID string, tokenSecret string) (s
 	return signedString, err
 }
 
-func ValidateJwtToken(tokenString string, tokenSecret string) (string, error) {
+func ValidateJwtToken(tokenString string, tokenSecret string, issuer string) (string, error) {
 	claimsStruct := jwt.RegisteredClaims{}
 	token, err := jwt.ParseWithClaims(
 		tokenString,
@@ -50,6 +56,15 @@ func ValidateJwtToken(tokenString string, tokenSecret string) (string, error) {
 	)
 	if err != nil {
 		return "", err
+	}
+
+	tokenIssuer, err := token.Claims.GetIssuer()
+	if err != nil {
+		return "", err
+	}
+
+	if tokenIssuer != issuer {
+		return "", errors.New("invalid token issuer")
 	}
 
 	userIDString, err := token.Claims.GetSubject()

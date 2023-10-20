@@ -35,15 +35,21 @@ func databaseUserToUser(dbUser database.User) User {
 }
 
 type AuthenticatedUser struct {
-	ID    int    `json:"id"`
-	Email string `json:"email"`
-	Token string `json:"token"`
+	ID           int    `json:"id"`
+	Email        string `json:"email"`
+	Token        string `json:"token"`
+	RefreshToken string `json:"refresh_token"`
 }
 
-func databaseUserToAuthenticatedUser(dbUser database.User, token string) AuthenticatedUser {
+func databaseUserToAuthenticatedUser(dbUser database.User, token string, refresh_token string) AuthenticatedUser {
 	return AuthenticatedUser{
-		ID:    dbUser.ID,
-		Email: dbUser.Email,
-		Token: token,
+		ID:           dbUser.ID,
+		Email:        dbUser.Email,
+		Token:        token,
+		RefreshToken: refresh_token,
 	}
+}
+
+type AccessToken struct {
+	Token string `json:"token"`
 }
