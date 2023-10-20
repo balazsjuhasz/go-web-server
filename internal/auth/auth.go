@@ -19,7 +19,7 @@ func HashPassword(password string) (string, error) {
 }
 
 func CheckPasswordHash(password string, hashedPassword string) error {
-	return bcrypt.CompareHashAndPassword([]byte(password), []byte(hashedPassword))
+	return bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
 }
 
 func CreateJwtToken(durationInSeconds int, userID string, tokenSecret string) (string, error) {
