@@ -39,20 +39,20 @@ func databaseUserToUser(dbUser database.User) User {
 }
 
 type AuthenticatedUser struct {
-	ID           int    `json:"id"`
-	Email        string `json:"email"`
+	User
 	Token        string `json:"token"`
 	RefreshToken string `json:"refresh_token"`
-	IsChirpyRed  bool   `json:"is_chirpy_red"`
 }
 
 func databaseUserToAuthenticatedUser(dbUser database.User, token string, refresh_token string) AuthenticatedUser {
 	return AuthenticatedUser{
-		ID:           dbUser.ID,
-		Email:        dbUser.Email,
+		User: User{
+			ID:          dbUser.ID,
+			Email:       dbUser.Email,
+			IsChirpyRed: dbUser.IsChirpyRed,
+		},
 		Token:        token,
 		RefreshToken: refresh_token,
-		IsChirpyRed:  dbUser.IsChirpyRed,
 	}
 }
 
