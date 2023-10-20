@@ -33,3 +33,17 @@ func databaseUserToUser(dbUser database.User) User {
 		Email: dbUser.Email,
 	}
 }
+
+type AuthenticatedUser struct {
+	ID    int    `json:"id"`
+	Email string `json:"email"`
+	Token string `json:"token"`
+}
+
+func databaseUserToAuthenticatedUser(dbUser database.User, token string) AuthenticatedUser {
+	return AuthenticatedUser{
+		ID:    dbUser.ID,
+		Email: dbUser.Email,
+		Token: token,
+	}
+}

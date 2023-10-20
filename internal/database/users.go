@@ -2,17 +2,15 @@ package database
 
 import (
 	"errors"
-
-	"golang.org/x/crypto/bcrypt"
 )
 
 // CreateUser creates a new user and saves it to disk
-func (db *DB) CreateUser(email string, password string) (User, error) {
-	dbStructure, err := db.loadDB()
-	if err != nil {
-		return User{}, err
+func (db *DB) CreateUser(email string, hashedPassword string) (User, error) {
+	if _, err := db.GetUserByEmail(email); !errors.Is(err, ErrNotExist) {
+		return User{}, ErrAlreadyExists
 	}
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+
+	dbStructure, err := db.loadDB()
 	if err != nil {
 		return User{}, err
 	}
@@ -21,9 +19,8 @@ func (db *DB) CreateUser(email string, password string) (User, error) {
 	user := User{
 		ID:       id,
 		Email:    email,
-		Password: string(hashedPassword),
+		Password: hashedPassword,
 	}
-
 	dbStructure.Users[id] = user
 
 	err = db.writeDB(dbStructure)
@@ -47,5 +44,45 @@ func (db *DB) GetUserByEmail(email string) (User, error) {
 		}
 	}
 
-	return User{}, errors.New("User is not found in the database")
+	return User{}, ErrNotExist
+}
+
+// GetUserD returns an user having the desired id
+func (db *DB) GetUser(id int) (User, error) {
+	dbStructure, err := db.loadDB()
+	if err != nil {
+		return User{}, err
+	}
+
+	for _, user := range dbStructure.Users {
+		if user.ID == id {
+			return user, nil
+		}
+	}
+
+	return User{}, ErrNotExist
+}
+
+// UpdateUser updates an user email and password
+func (db *DB) UpdateUser(id int, email string, hashedPassword string) (User, error) {
+	dbStructure, err := db.loadDB()
+	if err != nil {
+		return User{}, err
+	}
+
+	user, ok := dbStructure.Users[id]
+	if !ok {
+		return User{}, ErrNotExist
+	}
+
+	user.Email = email
+	user.Password = hashedPassword
+	dbStructure.Users[id] = user
+
+	err = db.writeDB(dbStructure)
+	if err != nil {
+		return User{}, err
+	}
+
+	return user, nil
 }

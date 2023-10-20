@@ -19,14 +19,14 @@ func (apiCfg *apiConfig) handlerCreateChirp(w http.ResponseWriter, r *http.Reque
 	params := parameters{}
 	err := decoder.Decode(&params)
 	if err != nil {
-		respondWithError(w, 500, "Couldn't decode parameters")
+		respondWithError(w, http.StatusInternalServerError, "Couldn't decode parameters")
 		return
 	}
 
 	// Check maximum length
 	if len(params.Body) > 140 {
 		log.Printf("Message length exceeded: %v", len(params.Body))
-		respondWithError(w, 400, "Chirp is too long")
+		respondWithError(w, http.StatusBadRequest, "Chirp is too long")
 		return
 	}
 
@@ -36,41 +36,41 @@ func (apiCfg *apiConfig) handlerCreateChirp(w http.ResponseWriter, r *http.Reque
 	// Save it to the store
 	chirp, err := apiCfg.DB.CreateChirp(cleanedMsg)
 	if err != nil {
-		respondWithError(w, 500, "Can't create chirp")
+		respondWithError(w, http.StatusInternalServerError, "Can't create chirp")
 		return
 	}
 
-	respondWithJSON(w, 201, databaseChirpToChirp(chirp))
+	respondWithJSON(w, http.StatusCreated, databaseChirpToChirp(chirp))
 }
 
 func (apiCfg *apiConfig) handlerGetChirps(w http.ResponseWriter, r *http.Request) {
 	dbChirps, err := apiCfg.DB.GetChirps()
 	if err != nil {
-		respondWithError(w, 500, "Couldn't retrive chirps")
+		respondWithError(w, http.StatusInternalServerError, "Couldn't retrive chirps")
 	}
 
-	respondWithJSON(w, 200, databaseChirpsToChirps(dbChirps))
+	respondWithJSON(w, http.StatusOK, databaseChirpsToChirps(dbChirps))
 }
 
 func (apiCfg *apiConfig) handlerGetChirpByID(w http.ResponseWriter, r *http.Request) {
 	chirpIDStr := chi.URLParam(r, "chirpID")
 	dbChirps, err := apiCfg.DB.GetChirps()
 	if err != nil {
-		respondWithError(w, 500, "Couldn't retrive chirps")
+		respondWithError(w, http.StatusInternalServerError, "Couldn't retrive chirps")
 	}
 
 	chirpID, err := strconv.Atoi(chirpIDStr)
 	if err != nil {
-		respondWithError(w, 400, fmt.Sprintf("Invalid ID: %v received", chirpIDStr))
+		respondWithError(w, http.StatusBadRequest, fmt.Sprintf("Invalid ID: %v received", chirpIDStr))
 		return
 	}
 
 	for _, chirp := range dbChirps {
 		if chirp.ID == chirpID {
-			respondWithJSON(w, 200, databaseChirpToChirp(chirp))
+			respondWithJSON(w, http.StatusOK, databaseChirpToChirp(chirp))
 			return
 		}
 	}
 
-	respondWithError(w, 404, fmt.Sprintf("Chirp with ID: %d not found", chirpID))
+	respondWithError(w, http.StatusNotFound, fmt.Sprintf("Chirp with ID: %d not found", chirpID))
 }
