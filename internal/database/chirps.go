@@ -38,3 +38,36 @@ func (db *DB) GetChirps() ([]Chirp, error) {
 
 	return chirps, nil
 }
+
+// GetChirp returns an chirp having the desired id
+func (db *DB) GetChirp(id int) (Chirp, error) {
+	dbStructure, err := db.loadDB()
+	if err != nil {
+		return Chirp{}, err
+	}
+
+	for _, chirp := range dbStructure.Chirps {
+		if chirp.ID == id {
+			return chirp, nil
+		}
+	}
+
+	return Chirp{}, ErrNotExist
+}
+
+// DeleteChirp deletes a chirp from the database
+func (db *DB) DeleteChirp(id int) error {
+	dbStructure, err := db.loadDB()
+	if err != nil {
+		return err
+	}
+
+	delete(dbStructure.Chirps, id)
+
+	err = db.writeDB(dbStructure)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

@@ -93,3 +93,49 @@ func (apiCfg *apiConfig) handlerGetChirpByID(w http.ResponseWriter, r *http.Requ
 
 	respondWithError(w, http.StatusNotFound, fmt.Sprintf("Chirp with ID: %d not found", chirpID))
 }
+
+func (apiCfg *apiConfig) handlerDeleteChirp(w http.ResponseWriter, r *http.Request) {
+	chirpIDStr := chi.URLParam(r, "chirpID")
+	chirpID, err := strconv.Atoi(chirpIDStr)
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, fmt.Sprintf("Invalid ID: %v received", chirpIDStr))
+		return
+	}
+
+	token, err := auth.GetBearerToken(r.Header)
+	if err != nil {
+		respondWithError(w, http.StatusUnauthorized, "Couldn't find JWT")
+		return
+	}
+
+	userIdString, err := auth.ValidateJwtToken(token, apiCfg.jwtSecret, "chirpy-access")
+	if err != nil {
+		respondWithError(w, http.StatusUnauthorized, "Couldn't validate JWT")
+		return
+	}
+
+	userId, err := strconv.Atoi(userIdString)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Couldn't get user id")
+		return
+	}
+
+	dbChirp, err := apiCfg.DB.GetChirp(chirpID)
+	if err != nil {
+		respondWithError(w, http.StatusNotFound, "Couldn't get chirp")
+		return
+	}
+
+	if dbChirp.AuthorID != userId {
+		respondWithError(w, http.StatusForbidden, "Not allowed")
+		return
+	}
+
+	err = apiCfg.DB.DeleteChirp(chirpID)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Couldn't delete chirp")
+		return
+	}
+
+	respondWithJSON(w, http.StatusOK, struct{}{})
+}

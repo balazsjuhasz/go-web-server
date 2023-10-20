@@ -47,7 +47,7 @@ func (db *DB) GetUserByEmail(email string) (User, error) {
 	return User{}, ErrNotExist
 }
 
-// GetUserD returns an user having the desired id
+// GetUser returns an user having the desired id
 func (db *DB) GetUser(id int) (User, error) {
 	dbStructure, err := db.loadDB()
 	if err != nil {
