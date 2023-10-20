@@ -1,7 +1,7 @@
 package database
 
 // CreateChirp creates a new chirp and saves it to disk
-func (db *DB) CreateChirp(body string) (Chirp, error) {
+func (db *DB) CreateChirp(body string, authorID int) (Chirp, error) {
 	dbStructure, err := db.loadDB()
 	if err != nil {
 		return Chirp{}, err
@@ -9,8 +9,9 @@ func (db *DB) CreateChirp(body string) (Chirp, error) {
 
 	id := len(dbStructure.Chirps) + 1
 	chirp := Chirp{
-		ID:   id,
-		Body: body,
+		ID:       id,
+		Body:     body,
+		AuthorID: authorID,
 	}
 
 	dbStructure.Chirps[id] = chirp

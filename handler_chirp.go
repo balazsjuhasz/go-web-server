@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/balazsjuhasz/go-web-server/internal/auth"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -23,6 +24,24 @@ func (apiCfg *apiConfig) handlerCreateChirp(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
+	token, err := auth.GetBearerToken(r.Header)
+	if err != nil {
+		respondWithError(w, http.StatusUnauthorized, "Couldn't find JWT")
+		return
+	}
+
+	userIdString, err := auth.ValidateJwtToken(token, apiCfg.jwtSecret, "chirpy-access")
+	if err != nil {
+		respondWithError(w, http.StatusUnauthorized, "Couldn't validate JWT")
+		return
+	}
+
+	userId, err := strconv.Atoi(userIdString)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Couldn't get user id")
+		return
+	}
+
 	// Check maximum length
 	if len(params.Body) > 140 {
 		log.Printf("Message length exceeded: %v", len(params.Body))
@@ -34,7 +53,7 @@ func (apiCfg *apiConfig) handlerCreateChirp(w http.ResponseWriter, r *http.Reque
 	cleanedMsg := filterBadWords(params.Body)
 
 	// Save it to the store
-	chirp, err := apiCfg.DB.CreateChirp(cleanedMsg)
+	chirp, err := apiCfg.DB.CreateChirp(cleanedMsg, userId)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Can't create chirp")
 		return
