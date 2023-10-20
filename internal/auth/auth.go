@@ -10,6 +10,15 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+type TokenType string
+
+const (
+	// TokenTypeAccess -
+	TokenTypeAccess TokenType = "chirpy-access"
+	// TokenTypeRefresh -
+	TokenTypeRefresh TokenType = "chirpy-refresh"
+)
+
 func HashPassword(password string) (string, error) {
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
@@ -22,21 +31,14 @@ func CheckPasswordHash(password string, hashedPassword string) error {
 	return bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
 }
 
-func CreateJwtToken(tokenType string, userID string, tokenSecret string) (string, error) {
-	issuer := "chirpy"
+func CreateJwtToken(tokenType TokenType, userID string, tokenSecret string) (string, error) {
 	deltaTime := time.Hour
-	switch typ := tokenType; typ {
-	case "access":
-		issuer += "-access"
-	case "refresh":
-		issuer += "-refresh"
+	if tokenType == TokenTypeAccess {
 		deltaTime = time.Hour * 24 * 60
-	default:
-		return "", errors.New("invalid token type")
 	}
 
 	claims := &jwt.RegisteredClaims{
-		Issuer:    issuer,
+		Issuer:    string(tokenType),
 		IssuedAt:  jwt.NewNumericDate(time.Now().UTC()),
 		ExpiresAt: jwt.NewNumericDate(time.Now().UTC().Add(deltaTime)),
 		Subject:   userID,
@@ -47,7 +49,7 @@ func CreateJwtToken(tokenType string, userID string, tokenSecret string) (string
 	return signedString, err
 }
 
-func ValidateJwtToken(tokenString string, tokenSecret string, issuer string) (string, error) {
+func ValidateJwtToken(tokenString string, tokenSecret string, tokenType TokenType) (string, error) {
 	claimsStruct := jwt.RegisteredClaims{}
 	token, err := jwt.ParseWithClaims(
 		tokenString,
@@ -63,7 +65,7 @@ func ValidateJwtToken(tokenString string, tokenSecret string, issuer string) (st
 		return "", err
 	}
 
-	if tokenIssuer != issuer {
+	if tokenIssuer != string(tokenType) {
 		return "", errors.New("invalid token issuer")
 	}
 

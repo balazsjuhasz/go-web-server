@@ -8,12 +8,9 @@ func (db *DB) RevokeToken(tokenString string) error {
 		return err
 	}
 
-	_, ok := dbStructure.RevokedTokens[tokenString]
-	if !ok {
-		dbStructure.RevokedTokens[tokenString] = Token{
-			ID:        tokenString,
-			RevokedAt: time.Now().UTC(),
-		}
+	dbStructure.RevokedTokens[tokenString] = Token{
+		ID:        tokenString,
+		RevokedAt: time.Now().UTC(),
 	}
 
 	err = db.writeDB(dbStructure)
@@ -24,7 +21,7 @@ func (db *DB) RevokeToken(tokenString string) error {
 	return nil
 }
 
-func (db *DB) CheckTokenRevoked(tokenString string) (bool, error) {
+func (db *DB) IsTokenRevoked(tokenString string) (bool, error) {
 	dbStructure, err := db.loadDB()
 	if err != nil {
 		return false, err

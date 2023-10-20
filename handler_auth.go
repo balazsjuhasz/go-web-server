@@ -35,13 +35,13 @@ func (apiCfg *apiConfig) handlerLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, err := auth.CreateJwtToken("access", strconv.Itoa(user.ID), apiCfg.jwtSecret)
+	token, err := auth.CreateJwtToken(auth.TokenTypeAccess, strconv.Itoa(user.ID), apiCfg.jwtSecret)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Couldn't create access token")
 		return
 	}
 
-	refresh_token, err := auth.CreateJwtToken("refresh", strconv.Itoa(user.ID), apiCfg.jwtSecret)
+	refresh_token, err := auth.CreateJwtToken(auth.TokenTypeRefresh, strconv.Itoa(user.ID), apiCfg.jwtSecret)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Couldn't create refresh token")
 		return
@@ -51,52 +51,52 @@ func (apiCfg *apiConfig) handlerLogin(w http.ResponseWriter, r *http.Request) {
 }
 
 func (apiCfg *apiConfig) handlerRefreshToken(w http.ResponseWriter, r *http.Request) {
-	token, err := auth.GetBearerToken(r.Header)
+	refreshToken, err := auth.GetBearerToken(r.Header)
 	if err != nil {
 		respondWithError(w, http.StatusUnauthorized, "Couldn't find JWT")
 		return
 	}
 
-	userIdString, err := auth.ValidateJwtToken(token, apiCfg.jwtSecret, "chirpy-refresh")
+	userIdString, err := auth.ValidateJwtToken(refreshToken, apiCfg.jwtSecret, auth.TokenTypeRefresh)
 	if err != nil {
 		respondWithError(w, http.StatusUnauthorized, "Couldn't validate JWT")
 		return
 	}
 
-	tokenRevoked, err := apiCfg.DB.CheckTokenRevoked(token)
+	isTokenRevoked, err := apiCfg.DB.IsTokenRevoked(refreshToken)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Token revoked checking failed")
 		return
 	}
 
-	if tokenRevoked {
-		respondWithError(w, http.StatusUnauthorized, "Token is revoked")
+	if isTokenRevoked {
+		respondWithError(w, http.StatusUnauthorized, "Refresh token is revoked")
 		return
 	}
 
-	token, err = auth.CreateJwtToken("access", userIdString, apiCfg.jwtSecret)
+	accessToken, err := auth.CreateJwtToken(auth.TokenTypeAccess, userIdString, apiCfg.jwtSecret)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Couldn't create access token")
 		return
 	}
 
-	respondWithJSON(w, http.StatusOK, AccessToken{Token: token})
+	respondWithJSON(w, http.StatusOK, AccessToken{Token: accessToken})
 }
 
 func (apiCfg *apiConfig) handlerRevokeToken(w http.ResponseWriter, r *http.Request) {
-	token, err := auth.GetBearerToken(r.Header)
+	refreshToken, err := auth.GetBearerToken(r.Header)
 	if err != nil {
 		respondWithError(w, http.StatusUnauthorized, "Couldn't find JWT")
 		return
 	}
 
-	_, err = auth.ValidateJwtToken(token, apiCfg.jwtSecret, "chirpy-refresh")
+	_, err = auth.ValidateJwtToken(refreshToken, apiCfg.jwtSecret, auth.TokenTypeRefresh)
 	if err != nil {
 		respondWithError(w, http.StatusUnauthorized, "Couldn't validate JWT")
 		return
 	}
 
-	err = apiCfg.DB.RevokeToken(token)
+	err = apiCfg.DB.RevokeToken(refreshToken)
 	if err != nil {
 		respondWithError(w, http.StatusUnauthorized, "Couldn't revoke JWT")
 		return
