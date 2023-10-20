@@ -14,6 +14,7 @@ type apiConfig struct {
 	fileserverHits int
 	DB             *database.DB
 	jwtSecret      string
+	polkaApiKey    string
 }
 
 func main() {
@@ -29,6 +30,11 @@ func main() {
 		log.Fatal("JWT_SECRET is not found in the environment")
 	}
 
+	polkaApiKey := os.Getenv("POLKA_API_KEY")
+	if polkaApiKey == "" {
+		log.Fatal("POLKA_API_KEY is not found in the environment")
+	}
+
 	filepathRoot := "."
 
 	db, err := database.NewDB("database.json")
@@ -40,6 +46,7 @@ func main() {
 		fileserverHits: 0,
 		DB:             db,
 		jwtSecret:      jwtSecret,
+		polkaApiKey:    polkaApiKey,
 	}
 
 	r := chi.NewRouter()
@@ -64,6 +71,8 @@ func main() {
 
 	apiRouter.Post("/refresh", apiCfg.handlerRefreshToken)
 	apiRouter.Post("/revoke", apiCfg.handlerRevokeToken)
+
+	apiRouter.Post("/polka/webhooks", apiCfg.handlerPolka)
 
 	r.Mount("/api", apiRouter)
 

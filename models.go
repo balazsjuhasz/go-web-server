@@ -25,14 +25,16 @@ func databaseChirpsToChirps(dbChirps []database.Chirp) []Chirp {
 }
 
 type User struct {
-	ID    int    `json:"id"`
-	Email string `json:"email"`
+	ID          int    `json:"id"`
+	Email       string `json:"email"`
+	IsChirpyRed bool   `json:"is_chirpy_red"`
 }
 
 func databaseUserToUser(dbUser database.User) User {
 	return User{
-		ID:    dbUser.ID,
-		Email: dbUser.Email,
+		ID:          dbUser.ID,
+		Email:       dbUser.Email,
+		IsChirpyRed: dbUser.IsChirpyRed,
 	}
 }
 
@@ -41,6 +43,7 @@ type AuthenticatedUser struct {
 	Email        string `json:"email"`
 	Token        string `json:"token"`
 	RefreshToken string `json:"refresh_token"`
+	IsChirpyRed  bool   `json:"is_chirpy_red"`
 }
 
 func databaseUserToAuthenticatedUser(dbUser database.User, token string, refresh_token string) AuthenticatedUser {
@@ -49,6 +52,7 @@ func databaseUserToAuthenticatedUser(dbUser database.User, token string, refresh
 		Email:        dbUser.Email,
 		Token:        token,
 		RefreshToken: refresh_token,
+		IsChirpyRed:  dbUser.IsChirpyRed,
 	}
 }
 

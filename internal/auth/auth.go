@@ -86,3 +86,13 @@ func GetBearerToken(headers http.Header) (string, error) {
 
 	return authStrings[1], nil
 }
+
+func GetApiKey(headers http.Header) (string, error) {
+	authHeader := headers.Get("Authorization")
+	authStrings := strings.Split(authHeader, " ")
+	if len(authStrings) != 2 || authStrings[0] != "ApiKey" {
+		return "", errors.New("invalid auth header, expected: ApiKey xxx")
+	}
+
+	return authStrings[1], nil
+}
