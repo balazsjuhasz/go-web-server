@@ -78,6 +78,10 @@ func (apiCfg *apiConfig) handlerGetChirps(w http.ResponseWriter, r *http.Request
 		sort.Slice(dbChirps, func(i, j int) bool {
 			return dbChirps[i].ID > dbChirps[j].ID
 		})
+	} else {
+		sort.Slice(dbChirps, func(i, j int) bool {
+			return dbChirps[i].ID < dbChirps[j].ID
+		})
 	}
 
 	if authorIDStr == "" {
