@@ -5,9 +5,11 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"sort"
 	"strconv"
 
 	"github.com/balazsjuhasz/go-web-server/internal/auth"
+	"github.com/balazsjuhasz/go-web-server/internal/database"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -63,12 +65,39 @@ func (apiCfg *apiConfig) handlerCreateChirp(w http.ResponseWriter, r *http.Reque
 }
 
 func (apiCfg *apiConfig) handlerGetChirps(w http.ResponseWriter, r *http.Request) {
+	authorIDStr := r.URL.Query().Get("author_id")
+	sorting := r.URL.Query().Get("sort")
+
 	dbChirps, err := apiCfg.DB.GetChirps()
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Couldn't retrive chirps")
+		return
 	}
 
-	respondWithJSON(w, http.StatusOK, databaseChirpsToChirps(dbChirps))
+	if sorting == "desc" {
+		sort.Slice(dbChirps, func(i, j int) bool {
+			return dbChirps[i].ID > dbChirps[j].ID
+		})
+	}
+
+	if authorIDStr == "" {
+		respondWithJSON(w, http.StatusOK, databaseChirpsToChirps(dbChirps))
+		return
+	}
+
+	authorID, err := strconv.Atoi(authorIDStr)
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, "Couldn't parse author_id")
+		return
+	}
+	filteredDbChirps := []database.Chirp{}
+	for _, dbChirp := range dbChirps {
+		if dbChirp.AuthorID == authorID {
+			filteredDbChirps = append(filteredDbChirps, dbChirp)
+		}
+	}
+
+	respondWithJSON(w, http.StatusOK, databaseChirpsToChirps(filteredDbChirps))
 }
 
 func (apiCfg *apiConfig) handlerGetChirpByID(w http.ResponseWriter, r *http.Request) {
